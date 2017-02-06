@@ -1,0 +1,18 @@
+syntax = "proto2";
+package crogers3;
+
+option java_package = "crogers3.proto.compiled";
+option java_outer_classname = "GenomeProtos";
+
+
+message Genome {
+  repeated Gene gene = 1;
+}
+
+message Gene {
+  optional int32 inNode = 1;
+  optional int32 outNode = 2;
+  optional double weight = 3;
+  optional bool enabled = 4;
+  optional int32 innovation_number = 5;
+}
