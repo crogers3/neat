@@ -2,6 +2,7 @@ package crogers3.neat;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,13 +16,14 @@ import crogers3.proto.compiled.GenomeProtos.Genome;
 
 public class GenomeMutator {
   private final InnovationNumberProvider innovationNumberProvider;
+  private final Random random;
   
-  public GenomeMutator(InnovationNumberProvider innovationNumberProvider) {
+  public GenomeMutator(InnovationNumberProvider innovationNumberProvider, Random random) {
     this.innovationNumberProvider = innovationNumberProvider;
+    this.random = random;
   }
   
   public Genome maybeMutateWeights(Genome genome) {
-    Random random = new Random();
     if (random.nextFloat() > Config.GENOME_MUTATION_CHANCE) {
       return genome;
     }
@@ -41,7 +43,6 @@ public class GenomeMutator {
   }
   
   public Genome maybeAddNode(Genome genome) {
-    Random random = new Random();
     if (random.nextDouble() > Config.NEW_NODE_CHANCE) {
       return genome;
     }
@@ -57,26 +58,23 @@ public class GenomeMutator {
     Gene gene = genome.getGene(index);
     
     mutatedGenome.setGene(index, gene.toBuilder().setEnabled(false));
-    mutatedGenome.addGene(
+    mutatedGenome.addGene(innovationNumberProvider.applyInnovationNumber(
         Gene.newBuilder()
             .setInNode(gene.getInNode())
             .setOutNode(newNodeId)
             .setEnabled(true)
-            .setWeight(1.0)
-            .setInnovationNumber(innovationNumberProvider.getNextNumber()));
-    mutatedGenome.addGene(
+            .setWeight(1.0)));
+    mutatedGenome.addGene(innovationNumberProvider.applyInnovationNumber(
         Gene.newBuilder()
             .setInNode(newNodeId)
             .setOutNode(gene.getOutNode())
             .setEnabled(true)
-            .setWeight(gene.getWeight())
-            .setInnovationNumber(innovationNumberProvider.getNextNumber()));
+            .setWeight(gene.getWeight())));
     
     return mutatedGenome.build();
   }
   
   public Genome maybeAddConnection(Genome genome) {
-    Random random = new Random();
     if (random.nextDouble() > Config.NEW_CONNECTION_CHANCE) {
       return genome;
     }
@@ -101,15 +99,45 @@ public class GenomeMutator {
       double randomWeight = 2 * random.nextFloat() * Config.MAX_RANDOM_MUTATION_STEP;
       randomWeight = randomWeight - (randomWeight / 2);
       return genome.toBuilder()
-          .addGene(
+          .addGene(innovationNumberProvider.applyInnovationNumber(
               Gene.newBuilder()
                   .setInNode(inNode)
                   .setOutNode(outNode)
                   .setEnabled(true)
-                  .setWeight(randomWeight)
-                  .setInnovationNumber(innovationNumberProvider.getNextNumber()))
+                  .setWeight(randomWeight)))
           .build();
     }
     return genome;
+  }
+  
+  public Genome crossoverGenomes(Genome genome1, Double fitness1, Genome genome2, Double fitness2) {
+    Map<Integer, Gene> genes1 =
+        genome1.getGeneList().stream()
+            .collect(Collectors.toMap(gene -> gene.getInnovationNumber(), gene -> gene));
+    Map<Integer, Gene> genes2 =
+        genome2.getGeneList().stream()
+            .collect(Collectors.toMap(gene -> gene.getInnovationNumber(), gene -> gene));
+    List<Integer> all = Sets.union(genes1.keySet(), genes2.keySet()).stream().sorted().collect(Collectors.toList());
+    Set<Integer> matching = Sets.intersection(genes1.keySet(), genes2.keySet());
+    Double maxFitness = Math.max(fitness1, fitness2);
+    
+    Genome.Builder builder = Genome.newBuilder();
+    for (Integer innovationNumber : all) {
+      boolean disabledIn1 = genes1.containsKey(innovationNumber) && !genes1.get(innovationNumber).getEnabled();
+      boolean disabledIn2 = genes2.containsKey(innovationNumber) && !genes2.get(innovationNumber).getEnabled();
+      boolean enabled = (disabledIn1 || disabledIn2) ? random.nextFloat() > Config.CHILD_DISABLE_CHANCE : true;
+      
+      if (matching.contains(innovationNumber)) {
+        Gene gene = (random.nextBoolean()) ? genes1.get(innovationNumber) : genes2.get(innovationNumber);
+        builder.addGene(gene.toBuilder().setEnabled(enabled));
+      } else {
+        if (fitness1.equals(maxFitness) && genes1.containsKey(innovationNumber)) {
+          builder.addGene(genes1.get(innovationNumber).toBuilder().setEnabled(enabled));
+        } else if (fitness2.equals(maxFitness) && genes2.containsKey(innovationNumber)) {
+          builder.addGene(genes2.get(innovationNumber).toBuilder().setEnabled(enabled));
+        }
+      }
+    }
+    return builder.build();
   }
 }
