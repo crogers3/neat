@@ -1,4 +1,4 @@
-package crogers3.tests;
+package crogers3.tests.neuralnet;
 
 import static org.junit.Assert.assertEquals;
 

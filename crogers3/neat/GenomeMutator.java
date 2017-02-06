@@ -24,17 +24,16 @@ public class GenomeMutator {
   }
   
   public Genome maybeMutateWeights(Genome genome) {
-    if (random.nextFloat() > Config.GENOME_MUTATION_CHANCE) {
+    if (random.nextDouble() > Config.GENOME_MUTATION_CHANCE) {
       return genome;
     }
     Genome.Builder mutatedGenomeBuilder = Genome.newBuilder();
-    int multiplier = -1 * random.nextInt(2);
     for (Gene gene : genome.getGeneList()) {
       double mutatedWeight;
-      if (random.nextFloat() < Config.UNIFORM_MUTATION_CHANCE) {
-        mutatedWeight = gene.getWeight() + (multiplier * Config.UNIFORM_MUTATION_STEP);
+      if (random.nextDouble() < Config.UNIFORM_MUTATION_CHANCE) {
+        mutatedWeight = gene.getWeight() + ((random.nextBoolean() ? 1 : -1) * Config.UNIFORM_MUTATION_STEP);
       } else {
-        mutatedWeight = 2 * random.nextFloat() * Config.MAX_RANDOM_MUTATION_STEP;
+        mutatedWeight = 2 * random.nextDouble() * Config.MAX_RANDOM_MUTATION_STEP;
         mutatedWeight = mutatedWeight - (mutatedWeight / 2);
       }
       mutatedGenomeBuilder.addGene(gene.toBuilder().setWeight(mutatedWeight));
@@ -96,7 +95,7 @@ public class GenomeMutator {
       if (connections.remove(ImmutableSet.of(inNode, outNode))) {
         continue;
       }
-      double randomWeight = 2 * random.nextFloat() * Config.MAX_RANDOM_MUTATION_STEP;
+      double randomWeight = 2 * random.nextDouble() * Config.MAX_RANDOM_MUTATION_STEP;
       randomWeight = randomWeight - (randomWeight / 2);
       return genome.toBuilder()
           .addGene(innovationNumberProvider.applyInnovationNumber(
@@ -125,7 +124,7 @@ public class GenomeMutator {
     for (Integer innovationNumber : all) {
       boolean disabledIn1 = genes1.containsKey(innovationNumber) && !genes1.get(innovationNumber).getEnabled();
       boolean disabledIn2 = genes2.containsKey(innovationNumber) && !genes2.get(innovationNumber).getEnabled();
-      boolean enabled = (disabledIn1 || disabledIn2) ? random.nextFloat() > Config.CHILD_DISABLE_CHANCE : true;
+      boolean enabled = (disabledIn1 || disabledIn2) ? random.nextDouble() > Config.CHILD_DISABLE_CHANCE : true;
       
       if (matching.contains(innovationNumber)) {
         Gene gene = (random.nextBoolean()) ? genes1.get(innovationNumber) : genes2.get(innovationNumber);
