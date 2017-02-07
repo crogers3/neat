@@ -24,6 +24,10 @@ public class GenomeMutator {
     this.random = random;
   }
   
+  public Genome maybeMutateGenome(Genome genome) {
+    return maybeAddConnection(maybeAddNode(maybeMutateWeights(genome)));
+  }
+  
   public Genome maybeMutateWeights(Genome genome) {
     if (random.nextDouble() > Config.GENOME_MUTATION_CHANCE) {
       return genome;

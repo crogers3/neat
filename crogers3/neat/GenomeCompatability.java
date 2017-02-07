@@ -10,11 +10,11 @@ import crogers3.proto.compiled.NeatProtos.Gene;
 import crogers3.proto.compiled.NeatProtos.Genome;
 
 public class GenomeCompatability {
-  public boolean areCompatable(Genome genome1, Genome genome2) {
+  public static boolean areCompatable(Genome genome1, Genome genome2) {
     return distance(genome1, genome2) <= Config.CT;
   }
   
-  public double distance(Genome genome1, Genome genome2) {
+  public static double distance(Genome genome1, Genome genome2) {
     Map<Integer, Gene> genes1 =
         genome1.getGeneList().stream().collect(Collectors.toMap(gene -> gene.getInnovationNumber(), gene -> gene));
     Integer maxInnovationNumber1 = Collections.max(genes1.keySet());
