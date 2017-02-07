@@ -17,8 +17,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import crogers3.neuralnet.NeuralNet;
-import crogers3.proto.compiled.GenomeProtos.Gene;
-import crogers3.proto.compiled.GenomeProtos.Genome;
+import crogers3.proto.compiled.NeatProtos.Gene;
+import crogers3.proto.compiled.NeatProtos.Genome;
 
 @RunWith(JUnit4.class)
 public class NeuralNetTest {
@@ -82,6 +82,20 @@ public class NeuralNetTest {
         (idToValue) -> {
            return ImmutableMap.of(outputId, idToValue.values().stream().reduce((val1, val2) -> val1 && val2).get());
         });
+  }
+  
+  @Test
+  public void testRecurrentNet() {
+    Genome genome = Genome.newBuilder()
+        .addGene(Gene.newBuilder().setInNode(1).setOutNode(2).setEnabled(true).setWeight(1))
+        .addGene(Gene.newBuilder().setInNode(2).setOutNode(3).setEnabled(true).setWeight(1))
+        .addGene(Gene.newBuilder().setInNode(3).setOutNode(4).setEnabled(true).setWeight(1))
+        .addGene(Gene.newBuilder().setInNode(4).setOutNode(2).setEnabled(true).setWeight(1))
+        .addGene(Gene.newBuilder().setInNode(4).setOutNode(5).setEnabled(true).setWeight(1))
+        .build();
+    NeuralNet net = NeuralNet.fromGenome(genome);
+    net.setInputValue(1, true);
+    assertEquals(true, net.getValues().get(5));
   }
   
   private void testNeuralNet(

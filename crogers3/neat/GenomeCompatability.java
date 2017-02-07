@@ -6,8 +6,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
-import crogers3.proto.compiled.GenomeProtos.Gene;
-import crogers3.proto.compiled.GenomeProtos.Genome;
+import crogers3.proto.compiled.NeatProtos.Gene;
+import crogers3.proto.compiled.NeatProtos.Genome;
 
 public class GenomeCompatability {
   public boolean areCompatable(Genome genome1, Genome genome2) {

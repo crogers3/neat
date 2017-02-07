@@ -9,8 +9,8 @@ import org.junit.runners.JUnit4;
 import crogers3.InnovationNumberProvider;
 import crogers3.neat.Config;
 import crogers3.neat.GenomeMutator;
-import crogers3.proto.compiled.GenomeProtos.Gene;
-import crogers3.proto.compiled.GenomeProtos.Genome;
+import crogers3.proto.compiled.NeatProtos.Gene;
+import crogers3.proto.compiled.NeatProtos.Genome;
 import crogers3.testing.FakeRandom;
 
 @RunWith(JUnit4.class)

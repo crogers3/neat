@@ -1,11 +1,11 @@
 package crogers3.neuralnet;
 
-import java.util.List;
+import java.util.Set;
 
 public interface Node {
-  boolean getValue();
+  boolean getValue(Set<Node> parents);
   
-  List<Node> getAncestors();
+  int getId();
   
   void clearCachedValue();
 }

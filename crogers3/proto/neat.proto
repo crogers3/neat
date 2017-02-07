@@ -2,8 +2,16 @@ syntax = "proto2";
 package crogers3;
 
 option java_package = "crogers3.proto.compiled";
-option java_outer_classname = "GenomeProtos";
+option java_outer_classname = "NeatProtos";
 
+
+message Population {
+  repeated Species species = 1;
+}
+
+message Species {
+  repeated Genome genome = 1;
+}
 
 message Genome {
   repeated Gene gene = 1;

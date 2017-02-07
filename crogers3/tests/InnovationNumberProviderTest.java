@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import crogers3.InnovationNumberProvider;
-import crogers3.proto.compiled.GenomeProtos.Gene;
+import crogers3.proto.compiled.NeatProtos.Gene;
 
 @RunWith(JUnit4.class)
 public class InnovationNumberProviderTest {

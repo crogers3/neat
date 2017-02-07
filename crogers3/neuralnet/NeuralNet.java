@@ -6,15 +6,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
-import crogers3.Pair;
-import crogers3.proto.compiled.GenomeProtos.Gene;
-import crogers3.proto.compiled.GenomeProtos.Genome;
+import crogers3.proto.compiled.NeatProtos.Gene;
+import crogers3.proto.compiled.NeatProtos.Genome;
 
 public class NeuralNet {
   private final ImmutableMap<Integer, Node> nodes;
@@ -43,7 +40,7 @@ public class NeuralNet {
     ImmutableMap.Builder<Integer, Boolean> values = ImmutableMap.builder();
     for (Integer outputId : outputIds) {
       Node outputNode = nodes.get(outputId);
-      values.put(outputId, outputNode.getValue());
+      values.put(outputId, outputNode.getValue(ImmutableSet.of()));
     }
     for (Node node : nodes.values()) {
       node.clearCachedValue();
@@ -53,48 +50,45 @@ public class NeuralNet {
   
   public static NeuralNet fromGenome(Genome genome) {
     Set<Integer> allIds = new HashSet<>();
-    Multimap<Integer, Pair<Integer, Double>> idsWithInputsToInputWeightPair = HashMultimap.create();
-    Set<Integer> idsWithOutputs = new HashSet<>();
+    for (Gene gene : genome.getGeneList()) {
+      allIds.add(gene.getInNode());
+      allIds.add(gene.getOutNode());
+    }
+    Set<Integer> inputIds = new HashSet<>(allIds);
+    Set<Integer> outputIds = new HashSet<>(allIds);
+    for (Gene gene : genome.getGeneList()) {
+      outputIds.remove(gene.getInNode());
+      inputIds.remove(gene.getOutNode());
+    }
     
+    Map<Integer, InputNode> inputNodes = new HashMap<>();
+    Map<Integer, Neuron> neurons = new HashMap<>();
+    // Create nodes
+    for (Integer id : allIds) {
+      if (inputIds.contains(id)) {
+        inputNodes.put(id, new InputNode(id));
+      } else {
+        neurons.put(id, new Neuron(id));
+      }
+    }
+    // Wire connections
     for (Gene gene : genome.getGeneList()) {
       if (!gene.getEnabled()) {
         continue;
       }
-      allIds.add(gene.getInNode());
-      allIds.add(gene.getOutNode());
-      idsWithInputsToInputWeightPair.put(gene.getOutNode(), new Pair<>(gene.getInNode(), gene.getWeight()));
-      idsWithOutputs.add(gene.getInNode());
+      Node inputNode;
+      if (inputIds.contains(gene.getInNode())) {
+        inputNode = inputNodes.get(gene.getInNode());
+      } else {
+        inputNode = neurons.get(gene.getInNode());
+      }
+      Neuron neuron = neurons.get(gene.getOutNode());
+      neuron.addInput(inputNode, gene.getWeight());
     }
-    
-    Set<Integer> inputIds = Sets.difference(allIds, idsWithInputsToInputWeightPair.keySet());
-    Set<Integer> outputIds = Sets.difference(allIds, idsWithOutputs);
     
     Map<Integer, Node> nodes = new HashMap<>();
-    for (Integer outputId : outputIds) {
-      createNode(outputId, idsWithInputsToInputWeightPair, nodes);
-    }
-    
+    nodes.putAll(inputNodes);
+    nodes.putAll(neurons);
     return new NeuralNet(nodes, inputIds, outputIds);
-  }
-  
-  private static Node createNode(
-      Integer nodeId,
-      Multimap<Integer, Pair<Integer, Double>> nodeIdToInputWeightPair,
-      Map<Integer, Node> nodes) {
-    if (nodes.containsKey(nodeId)) {
-      return nodes.get(nodeId);
-    }
-    if (!nodeIdToInputWeightPair.containsKey(nodeId)) {
-      Node node = new InputNode();
-      nodes.put(nodeId, node);
-      return node;
-    }
-    Neuron neuron = new Neuron();
-    for (Pair<Integer, Double> inputWeightPair : nodeIdToInputWeightPair.get(nodeId)) {
-      Node inputNode = createNode(inputWeightPair.getFirst(), nodeIdToInputWeightPair, nodes);
-      neuron.addInput(inputNode, inputWeightPair.getSecond());
-    }
-    nodes.put(nodeId, neuron);
-    return neuron;
   }
 }

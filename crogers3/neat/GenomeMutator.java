@@ -1,6 +1,7 @@
 package crogers3.neat;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -11,8 +12,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import crogers3.InnovationNumberProvider;
-import crogers3.proto.compiled.GenomeProtos.Gene;
-import crogers3.proto.compiled.GenomeProtos.Genome;
+import crogers3.proto.compiled.NeatProtos.Gene;
+import crogers3.proto.compiled.NeatProtos.Genome;
 
 public class GenomeMutator {
   private final InnovationNumberProvider innovationNumberProvider;
@@ -89,9 +90,17 @@ public class GenomeMutator {
             .reduce(Collections.emptySet(), (result, set) -> Sets.union(result, set))
             .stream()
             .collect(Collectors.toList());
+    Set<Integer> inputIds = new HashSet<>(allNodes);
+    Set<Integer> outputIds = new HashSet<>(allNodes);
+    for (Gene gene : genome.getGeneList()) {
+      outputIds.remove(gene.getInNode());
+      inputIds.remove(gene.getOutNode());
+    }
+    List<Integer> validIds = Sets.difference(Sets.difference(new HashSet<>(allNodes), inputIds), outputIds)
+        .stream().collect(Collectors.toList());
     while (!connections.isEmpty()) {
-      Integer inNode = allNodes.get(random.nextInt(allNodes.size()));
-      Integer outNode = allNodes.get(random.nextInt(allNodes.size()));
+      Integer inNode = validIds.get(random.nextInt(validIds.size()));
+      Integer outNode = validIds.get(random.nextInt(validIds.size()));
       if (connections.remove(ImmutableSet.of(inNode, outNode))) {
         continue;
       }
